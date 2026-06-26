@@ -48,6 +48,11 @@
   text-shadow: 0 1px 1px #000;
 }
 
+.mk-em-stain-pip.active[data-mkem-value="6"] {
+  background: #050505;
+  border-color: #000;
+}
+
 .mk-em-stain-pip.disabled,
 .mk-em-stain-pip:disabled {
   background: rgba(120, 120, 120, 0.18);

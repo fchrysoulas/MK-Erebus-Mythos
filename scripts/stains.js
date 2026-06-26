@@ -1,7 +1,7 @@
 /*
  * MK-Erebus-Mythos
  * Foundry VTT v12/v13 module for Erebus Mythos / Shadowdark campaigns.
- * v0.1.5: detect visible Devout class blocks on Shadowdark sheets.
+ * v0.1.6: announce player Stain changes and blacken Stain 6.
  */
 
 const MKEM = {
@@ -142,10 +142,27 @@ function escapeHtml(value) {
   return div.innerHTML;
 }
 
-async function setStain(actor, value, root = null) {
+async function announceStainChange(actor, previous, next, maxStain) {
+  await ChatMessage.create({
+    speaker: actorSpeaker(actor),
+    content: renderChatCard(
+      actor,
+      "Stain Changed",
+      `${escapeHtml(game.user.name)} sets ${escapeHtml(actor.name)}'s Stain from <strong>${previous}</strong> to <strong>${next}</strong>/${maxStain}.`
+    )
+  });
+}
+
+async function setStain(actor, value, root = null, options = {}) {
   if (!canControl(actor)) return ui.notifications.warn("You do not own this actor.");
-  const stain = clampNumber(value, MKEM.MIN_STAIN, getMaxStain(actor, root));
+  const maxStain = getMaxStain(actor, root);
+  const previous = getState(actor, root).stain;
+  const stain = clampNumber(value, MKEM.MIN_STAIN, maxStain);
   await actor.setFlag(MKEM.ID, MKEM.FLAGS.stain, stain);
+
+  if (options.announce && !game.user.isGM && stain !== previous) {
+    await announceStainChange(actor, previous, stain, maxStain);
+  }
 }
 
 async function setEvilEye(actor, active) {
@@ -252,7 +269,7 @@ function buildTracker(actor, root = null) {
       const value = clampNumber(button.dataset.mkemValue, 1, maxStain);
       const current = getState(actor, root).stain;
       const next = current === value ? Math.max(MKEM.MIN_STAIN, value - 1) : value;
-      await setStain(actor, next, root);
+      await setStain(actor, next, root, { announce: true });
     });
   });
 

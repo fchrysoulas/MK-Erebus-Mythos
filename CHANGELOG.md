@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.6]
+
+### Added
+
+- Player changes to the Stain track now create chat messages.
+
+### Changed
+
+- Active Stain 6 now appears black.
+
 ## [0.1.5]
 
 ### Fixed
