@@ -1,13 +1,14 @@
 /*
  * MK-Erebus-Mythos
  * Foundry VTT v12/v13 module for Erebus Mythos / Shadowdark campaigns.
- * v0.1.2: fix legacy flag reads after module rename.
+ * v0.1.3: add Devout Stain maximum.
  */
 
 const MKEM = {
   ID: "mk-erebus-mythos",
   LEGACY_IDS: ["mk-erebus-stains"],
   MAX_STAIN: 6,
+  DEVOUT_MAX_STAIN: 4,
   FLAGS: {
     stain: "stain",
     evilEye: "evilEye"
@@ -44,9 +45,49 @@ function getFlagCompat(actor, key) {
   return undefined;
 }
 
+function normalizeName(value) {
+  return String(value ?? "").trim().toLowerCase();
+}
+
+function itemType(item) {
+  return normalizeName(item?.type ?? item?.documentName ?? "");
+}
+
+function itemName(item) {
+  return normalizeName(item?.name ?? item?.system?.name ?? "");
+}
+
+function getClassNames(actor) {
+  if (!actor) return [];
+
+  const names = [];
+  const push = value => {
+    const name = normalizeName(value?.name ?? value?.label ?? value);
+    if (name) names.push(name);
+  };
+
+  push(actor.system?.class);
+  push(actor.system?.className);
+  push(actor.system?.details?.class);
+  push(actor.system?.details?.className);
+
+  for (const item of actor.items ?? []) {
+    const type = itemType(item);
+    const name = itemName(item);
+    if (name && (type === "class" || type.includes("class"))) push(name);
+  }
+
+  return [...new Set(names)];
+}
+
+function getMaxStain(actor) {
+  return getClassNames(actor).includes("devout") ? MKEM.DEVOUT_MAX_STAIN : MKEM.MAX_STAIN;
+}
+
 function getState(actor) {
+  const maxStain = getMaxStain(actor);
   return {
-    stain: clampNumber(getFlagCompat(actor, MKEM.FLAGS.stain) ?? 0, 0, MKEM.MAX_STAIN),
+    stain: clampNumber(getFlagCompat(actor, MKEM.FLAGS.stain) ?? 0, 0, maxStain),
     evilEye: Boolean(getFlagCompat(actor, MKEM.FLAGS.evilEye))
   };
 }
@@ -77,7 +118,7 @@ function escapeHtml(value) {
 
 async function setStain(actor, value) {
   if (!canControl(actor)) return ui.notifications.warn("You do not own this actor.");
-  const stain = clampNumber(value, 0, MKEM.MAX_STAIN);
+  const stain = clampNumber(value, 0, getMaxStain(actor));
   await actor.setFlag(MKEM.ID, MKEM.FLAGS.stain, stain);
 }
 
@@ -111,6 +152,7 @@ async function rollEvilEye(actor) {
   if (!canControl(actor)) return ui.notifications.warn("You do not own this actor.");
 
   const state = getState(actor);
+  const maxStain = getMaxStain(actor);
   if (state.stain <= 0) {
     await ChatMessage.create({
       speaker: actorSpeaker(actor),
@@ -129,7 +171,7 @@ async function rollEvilEye(actor) {
     `${escapeHtml(actor.name)} rolls <strong>${state.stain}d6</strong> for Stain.`,
     `Dice: <span class="mk-em-rolls">${dice.join(", ")}</span>`,
     triggered
-      ? `<strong>${ones}</strong> one${ones === 1 ? "" : "s"} rolled. The Evil Eye manifests and the Stain track is set to 6.`
+      ? `<strong>${ones}</strong> one${ones === 1 ? "" : "s"} rolled. The Evil Eye manifests and the Stain track is set to ${maxStain}.`
       : `No 1 was rolled.`
   ].join("<br>");
 
@@ -139,7 +181,7 @@ async function rollEvilEye(actor) {
   });
 
   if (triggered) {
-    await setStain(actor, MKEM.MAX_STAIN);
+    await setStain(actor, maxStain);
     await setEvilEye(actor, true);
   }
 }
@@ -153,6 +195,7 @@ function selectedActor() {
 
 function buildTracker(actor) {
   const state = getState(actor);
+  const maxStain = getMaxStain(actor);
   const wrapper = document.createElement("div");
   wrapper.className = `SD-box mk-em-tracker${state.evilEye ? " mk-em-evil" : ""}`;
   wrapper.dataset.mkErebusMythos = "tracker";
@@ -160,19 +203,21 @@ function buildTracker(actor) {
   const pips = Array.from({ length: MKEM.MAX_STAIN }, (_, i) => {
     const value = i + 1;
     const active = value <= state.stain;
+    const disabled = value > maxStain;
     return `
       <button type="button"
-        class="mk-em-stain-pip${active ? " active" : ""}"
+        class="mk-em-stain-pip${active ? " active" : ""}${disabled ? " disabled" : ""}"
         data-mkem-action="set-stain"
         data-mkem-value="${value}"
-        aria-label="Set Stain to ${value}"
-        title="Set Stain to ${value}">${value}</button>`;
+        ${disabled ? "disabled" : ""}
+        aria-label="${disabled ? `Stain ${value} is unavailable for Devout characters` : `Set Stain to ${value}`}"
+        title="${disabled ? `Stain ${value} is unavailable for Devout characters` : `Set Stain to ${value}`}">${value}</button>`;
   }).join("");
 
   wrapper.innerHTML = `
     <div class="header">
       <label>Stain Track</label>
-      <span class="mk-em-stain-value">Stain ${state.stain}/${MKEM.MAX_STAIN}</span>
+      <span class="mk-em-stain-value">Stain ${state.stain}/${maxStain}</span>
     </div>
     <div class="content mk-em-content">
       <div class="mk-em-track" aria-label="Stain tracker 1 to 6">${pips}</div>
@@ -185,7 +230,8 @@ function buildTracker(actor) {
     button.addEventListener("click", async ev => {
       ev.preventDefault();
       ev.stopPropagation();
-      const value = clampNumber(button.dataset.mkemValue, 1, MKEM.MAX_STAIN);
+      if (button.disabled) return;
+      const value = clampNumber(button.dataset.mkemValue, 1, maxStain);
       const current = getState(actor).stain;
       // Clicking the already-selected first mark clears the track without adding another visible control.
       const next = current === value ? Math.max(0, value - 1) : value;

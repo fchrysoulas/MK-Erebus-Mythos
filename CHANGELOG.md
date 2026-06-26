@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.3] - 2026-06-27
+
+### Added
+
+- Devout characters now have a maximum Stain of 4, with Stain 5 and 6 disabled on their tracker.
+
 ## [0.1.2] - 2026-06-27
 
 ### Added
