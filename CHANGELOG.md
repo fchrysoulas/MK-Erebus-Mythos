@@ -2,20 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.1.4] - 2026-06-27
+## [0.1.5]
+
+### Fixed
+
+- Devout class detection now also reads visible Shadowdark sheet class blocks so Stain 5 and 6 are greyed out when the sheet shows Class Devout.
+
+## [0.1.4]
 
 ### Fixed
 
 - Stain now clamps to a minimum of 1.
 - Devout class detection now supports broader class-name formats such as "The Devout" and class data stored in actor system fields.
 
-## [0.1.3] - 2026-06-27
+## [0.1.3]
 
 ### Added
 
 - Devout characters now have a maximum Stain of 4, with Stain 5 and 6 disabled on their tracker.
 
-## [0.1.2] - 2026-06-27
+## [0.1.2]
 
 ### Added
 

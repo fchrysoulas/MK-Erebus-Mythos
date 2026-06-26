@@ -1,7 +1,7 @@
 /*
  * MK-Erebus-Mythos
  * Foundry VTT v12/v13 module for Erebus Mythos / Shadowdark campaigns.
- * v0.1.4: enforce minimum Stain and improve Devout detection.
+ * v0.1.5: detect visible Devout class blocks on Shadowdark sheets.
  */
 
 const MKEM = {
@@ -54,6 +54,10 @@ function hasDevoutName(value) {
   return /\bdevout\b/i.test(String(value ?? ""));
 }
 
+function compactText(value) {
+  return String(value ?? "").replace(/\s+/g, " ").trim();
+}
+
 function itemType(item) {
   return normalizeName(item?.type ?? item?.documentName ?? "");
 }
@@ -92,12 +96,22 @@ function getClassNames(actor) {
   return [...new Set(names)];
 }
 
-function getMaxStain(actor) {
-  return getClassNames(actor).some(hasDevoutName) ? MKEM.DEVOUT_MAX_STAIN : MKEM.MAX_STAIN;
+function hasVisibleDevoutClass(root) {
+  if (!root) return false;
+
+  return [...root.querySelectorAll(".SD-box, .item, .resource, .form-group, [data-item-id], li, section, article")]
+    .some(element => {
+      const text = compactText(element.textContent);
+      return text.length <= 120 && /\bclass\b/i.test(text) && hasDevoutName(text);
+    });
 }
 
-function getState(actor) {
-  const maxStain = getMaxStain(actor);
+function getMaxStain(actor, root = null) {
+  return getClassNames(actor).some(hasDevoutName) || hasVisibleDevoutClass(root) ? MKEM.DEVOUT_MAX_STAIN : MKEM.MAX_STAIN;
+}
+
+function getState(actor, root = null) {
+  const maxStain = getMaxStain(actor, root);
   return {
     stain: clampNumber(getFlagCompat(actor, MKEM.FLAGS.stain) ?? MKEM.MIN_STAIN, MKEM.MIN_STAIN, maxStain),
     evilEye: Boolean(getFlagCompat(actor, MKEM.FLAGS.evilEye))
@@ -128,9 +142,9 @@ function escapeHtml(value) {
   return div.innerHTML;
 }
 
-async function setStain(actor, value) {
+async function setStain(actor, value, root = null) {
   if (!canControl(actor)) return ui.notifications.warn("You do not own this actor.");
-  const stain = clampNumber(value, MKEM.MIN_STAIN, getMaxStain(actor));
+  const stain = clampNumber(value, MKEM.MIN_STAIN, getMaxStain(actor, root));
   await actor.setFlag(MKEM.ID, MKEM.FLAGS.stain, stain);
 }
 
@@ -159,12 +173,12 @@ function renderChatCard(actor, title, body) {
   </div>`;
 }
 
-async function rollEvilEye(actor) {
+async function rollEvilEye(actor, root = null) {
   if (!actor) return ui.notifications.warn("Select a token or open a character sheet first.");
   if (!canControl(actor)) return ui.notifications.warn("You do not own this actor.");
 
-  const state = getState(actor);
-  const maxStain = getMaxStain(actor);
+  const state = getState(actor, root);
+  const maxStain = getMaxStain(actor, root);
   const roll = await new Roll(`${state.stain}d6`).evaluate({ async: true });
   const dice = getDiceResults(roll);
   const ones = dice.filter(d => d === 1).length;
@@ -185,7 +199,7 @@ async function rollEvilEye(actor) {
   });
 
   if (triggered) {
-    await setStain(actor, maxStain);
+    await setStain(actor, maxStain, root);
     await setEvilEye(actor, true);
   }
 }
@@ -197,9 +211,9 @@ function selectedActor() {
   return null;
 }
 
-function buildTracker(actor) {
-  const state = getState(actor);
-  const maxStain = getMaxStain(actor);
+function buildTracker(actor, root = null) {
+  const state = getState(actor, root);
+  const maxStain = getMaxStain(actor, root);
   const wrapper = document.createElement("div");
   wrapper.className = `SD-box mk-em-tracker${state.evilEye ? " mk-em-evil" : ""}`;
   wrapper.dataset.mkErebusMythos = "tracker";
@@ -236,16 +250,16 @@ function buildTracker(actor) {
       ev.stopPropagation();
       if (button.disabled) return;
       const value = clampNumber(button.dataset.mkemValue, 1, maxStain);
-      const current = getState(actor).stain;
+      const current = getState(actor, root).stain;
       const next = current === value ? Math.max(MKEM.MIN_STAIN, value - 1) : value;
-      await setStain(actor, next);
+      await setStain(actor, next, root);
     });
   });
 
   wrapper.querySelector("[data-mkem-action='roll-evil-eye']")?.addEventListener("click", async ev => {
     ev.preventDefault();
     ev.stopPropagation();
-    await rollEvilEye(actor);
+    await rollEvilEye(actor, root);
   });
 
   return wrapper;
@@ -286,7 +300,7 @@ function injectTracker(app, html) {
 
   hideLuckBox(root);
 
-  const tracker = buildTracker(actor);
+  const tracker = buildTracker(actor, root);
   const specialBox = findSpecialAbilitiesBox(root);
   if (specialBox) {
     specialBox.insertAdjacentElement("afterend", tracker);
@@ -311,6 +325,7 @@ Hooks.once("ready", () => {
 
   const api = {
     getState,
+    getMaxStain,
     setStain,
     addStain,
     clearStain,

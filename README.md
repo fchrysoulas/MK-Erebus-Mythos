@@ -2,6 +2,10 @@
 
 Compact Foundry VTT module for Erebus Mythos Stain and Evil Eye tracking on Shadowdark actor sheets.
 
+## v0.1.5
+
+- Fixes Devout detection from the visible Shadowdark sheet class block so Stain **5** and **6** are greyed out for Devout characters.
+
 ## v0.1.4
 
 - Stain cannot go below **1**.
