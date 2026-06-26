@@ -2,6 +2,10 @@
 
 Compact Foundry VTT module for Erebus Mythos Stain and Evil Eye tracking on Shadowdark actor sheets.
 
+## v0.1.7
+
+- Manual Stain track changes create chat messages for all users, including GMs.
+
 ## v0.1.6
 
 - Player changes to the Stain track appear in chat.

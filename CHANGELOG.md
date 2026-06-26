@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.7]
+
+### Fixed
+
+- Manual Stain track changes now create chat messages for all users, including GMs.
+
 ## [0.1.6]
 
 ### Added

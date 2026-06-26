@@ -1,7 +1,7 @@
 /*
  * MK-Erebus-Mythos
  * Foundry VTT v12/v13 module for Erebus Mythos / Shadowdark campaigns.
- * v0.1.6: announce player Stain changes and blacken Stain 6.
+ * v0.1.7: announce all manual Stain track changes.
  */
 
 const MKEM = {
@@ -160,7 +160,7 @@ async function setStain(actor, value, root = null, options = {}) {
   const stain = clampNumber(value, MKEM.MIN_STAIN, maxStain);
   await actor.setFlag(MKEM.ID, MKEM.FLAGS.stain, stain);
 
-  if (options.announce && !game.user.isGM && stain !== previous) {
+  if (options.announce && stain !== previous) {
     await announceStainChange(actor, previous, stain, maxStain);
   }
 }

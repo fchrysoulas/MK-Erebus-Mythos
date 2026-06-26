@@ -2,7 +2,7 @@
   "id": "mk-erebus-mythos",
   "title": "MK-Erebus-Mythos",
   "description": "Adds a compact Erebus Mythos Stain and Evil Eye tracker to Shadowdark actor sheets.",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "authors": [
     {
       "name": "Mikrokouneli"
@@ -32,5 +32,5 @@
   ],
   "url": "https://github.com/fchrysoulas/MK-Erebus-Mythos",
   "manifest": "https://github.com/fchrysoulas/MK-Erebus-Mythos/releases/latest/download/module.json",
-  "download": "https://github.com/fchrysoulas/MK-Erebus-Mythos/releases/download/v0.1.6/mk-erebus-mythos.zip"
+  "download": "https://github.com/fchrysoulas/MK-Erebus-Mythos/releases/download/v0.1.7/mk-erebus-mythos.zip"
 }
