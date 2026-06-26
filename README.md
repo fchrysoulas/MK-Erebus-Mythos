@@ -2,43 +2,43 @@
 
 Compact Foundry VTT module for Erebus Mythos Stain and Evil Eye tracking on Shadowdark actor sheets.
 
-## v0.1.7
+## Features
 
-- Manual Stain track changes create chat messages for all users, including GMs.
+- Adds an **Erebus Mythos** Stain tracker to Shadowdark player actor sheets.
+- Places the tracker on the **Abilities** tab after **Special Abilities**.
+- Tracks Stain from **1** to **6**.
+- Prevents Stain from dropping below **1**.
+- Posts chat messages when the Stain track is changed manually.
+- Rolls Evil Eye from the eye button using `Stain d6`; any `1` triggers Evil Eye.
+- Sets Stain to the actor's maximum when Evil Eye triggers.
+- Shows active Stain **6** in black.
+- Supports Devout characters with a maximum Stain of **4**.
+- Greys out Stain **5** and **6** for Devout characters.
 
-## v0.1.6
+## Requirements
 
-- Player changes to the Stain track appear in chat.
-- Active Stain **6** appears black.
-
-## v0.1.5
-
-- Fixes Devout detection from the visible Shadowdark sheet class block so Stain **5** and **6** are greyed out for Devout characters.
-
-## v0.1.4
-
-- Stain cannot go below **1**.
-- Improves Devout class detection for class names such as **The Devout**.
-- Devout characters have a maximum Stain of **4**.
-- Stain values **5** and **6** are disabled on Devout character trackers.
-
-## v0.1.3
-
-- Devout characters have a maximum Stain of **4**.
-- Stain values **5** and **6** are disabled on Devout character trackers.
-
-## v0.1.2
-
-- Adds an **Erebus Mythos** box to the player actor **Abilities** tab.
-- Places it after the Shadowdark **Special Abilities** section.
-- Provides a Stain track from **1 to 6**.
-- Click a number to set Stain to that value.
-- Click the currently selected number to reduce by one; clicking 1 when Stain is 1 clears the track.
-- Uses the eye image button to roll Evil Eye.
-- Evil Eye roll: roll `Stain d6`; any `1` triggers Evil Eye.
-- Stores actor flags under `mk-erebus-mythos`.
-- Safely reads old `mk-erebus-stains` data without calling Foundry `getFlag()` on the inactive scope.
+- Foundry VTT 12 or 13.
+- Shadowdark system 3.5.0 or newer.
 
 ## Install
 
-Place the `mk-erebus-mythos` folder in Foundry's `Data/modules` folder and enable **MK-Erebus-Mythos**.
+Use this manifest URL in Foundry:
+
+```text
+https://github.com/fchrysoulas/MK-Erebus-Mythos/releases/latest/download/module.json
+```
+
+Or place the `mk-erebus-mythos` folder in Foundry's `Data/modules` folder and enable **MK-Erebus-Mythos**.
+
+## Usage
+
+- Click a Stain number to set the actor's Stain to that value.
+- Click the currently selected Stain number to reduce Stain by one.
+- Click the eye button to roll Evil Eye.
+- For Devout characters, Stain is capped at **4** and values **5** and **6** are unavailable.
+
+## Data
+
+The module stores actor flags under `mk-erebus-mythos`.
+
+It also reads old `mk-erebus-stains` flag data for compatibility with earlier versions.
