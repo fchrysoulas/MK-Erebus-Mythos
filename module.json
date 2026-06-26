@@ -1,0 +1,36 @@
+{
+  "id": "mk-erebus-mythos",
+  "title": "MK-Erebus-Mythos",
+  "description": "Adds a compact Erebus Mythos Stain and Evil Eye tracker to Shadowdark actor sheets.",
+  "version": "0.1.2",
+  "authors": [
+    {
+      "name": "Mikrokouneli"
+    }
+  ],
+  "compatibility": {
+    "minimum": "12",
+    "verified": "13",
+    "maximum": "13"
+  },
+  "relationships": {
+    "systems": [
+      {
+        "id": "shadowdark",
+        "type": "system",
+        "compatibility": {
+          "minimum": "3.5.0"
+        }
+      }
+    ]
+  },
+  "esmodules": [
+    "scripts/stains.js"
+  ],
+  "styles": [
+    "styles/stains.css"
+  ],
+  "url": "",
+  "manifest": "",
+  "download": ""
+}
