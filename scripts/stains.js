@@ -1,12 +1,13 @@
 /*
  * MK-Erebus-Mythos
  * Foundry VTT v12/v13 module for Erebus Mythos / Shadowdark campaigns.
- * v0.1.3: add Devout Stain maximum.
+ * v0.1.4: enforce minimum Stain and improve Devout detection.
  */
 
 const MKEM = {
   ID: "mk-erebus-mythos",
   LEGACY_IDS: ["mk-erebus-stains"],
+  MIN_STAIN: 1,
   MAX_STAIN: 6,
   DEVOUT_MAX_STAIN: 4,
   FLAGS: {
@@ -49,6 +50,10 @@ function normalizeName(value) {
   return String(value ?? "").trim().toLowerCase();
 }
 
+function hasDevoutName(value) {
+  return /\bdevout\b/i.test(String(value ?? ""));
+}
+
 function itemType(item) {
   return normalizeName(item?.type ?? item?.documentName ?? "");
 }
@@ -62,7 +67,7 @@ function getClassNames(actor) {
 
   const names = [];
   const push = value => {
-    const name = normalizeName(value?.name ?? value?.label ?? value);
+    const name = normalizeName(value?.name ?? value?.label ?? value?.value ?? value?.title ?? value);
     if (name) names.push(name);
   };
 
@@ -70,24 +75,31 @@ function getClassNames(actor) {
   push(actor.system?.className);
   push(actor.system?.details?.class);
   push(actor.system?.details?.className);
+  push(actor.system?.character?.class);
+  push(actor.system?.character?.className);
+
+  for (const value of Object.values(actor.system?.classes ?? {})) {
+    push(value);
+  }
 
   for (const item of actor.items ?? []) {
     const type = itemType(item);
     const name = itemName(item);
-    if (name && (type === "class" || type.includes("class"))) push(name);
+    const category = normalizeName(item?.system?.category ?? item?.system?.type ?? "");
+    if (name && (type.includes("class") || category.includes("class") || hasDevoutName(name))) push(name);
   }
 
   return [...new Set(names)];
 }
 
 function getMaxStain(actor) {
-  return getClassNames(actor).includes("devout") ? MKEM.DEVOUT_MAX_STAIN : MKEM.MAX_STAIN;
+  return getClassNames(actor).some(hasDevoutName) ? MKEM.DEVOUT_MAX_STAIN : MKEM.MAX_STAIN;
 }
 
 function getState(actor) {
   const maxStain = getMaxStain(actor);
   return {
-    stain: clampNumber(getFlagCompat(actor, MKEM.FLAGS.stain) ?? 0, 0, maxStain),
+    stain: clampNumber(getFlagCompat(actor, MKEM.FLAGS.stain) ?? MKEM.MIN_STAIN, MKEM.MIN_STAIN, maxStain),
     evilEye: Boolean(getFlagCompat(actor, MKEM.FLAGS.evilEye))
   };
 }
@@ -118,7 +130,7 @@ function escapeHtml(value) {
 
 async function setStain(actor, value) {
   if (!canControl(actor)) return ui.notifications.warn("You do not own this actor.");
-  const stain = clampNumber(value, 0, getMaxStain(actor));
+  const stain = clampNumber(value, MKEM.MIN_STAIN, getMaxStain(actor));
   await actor.setFlag(MKEM.ID, MKEM.FLAGS.stain, stain);
 }
 
@@ -135,7 +147,7 @@ async function addStain(actor, amount = 1) {
 
 async function clearStain(actor) {
   if (!actor) return ui.notifications.warn("Select a token or open a character sheet first.");
-  await setStain(actor, 0);
+  await setStain(actor, MKEM.MIN_STAIN);
   await setEvilEye(actor, false);
 }
 
@@ -153,14 +165,6 @@ async function rollEvilEye(actor) {
 
   const state = getState(actor);
   const maxStain = getMaxStain(actor);
-  if (state.stain <= 0) {
-    await ChatMessage.create({
-      speaker: actorSpeaker(actor),
-      content: renderChatCard(actor, "Evil Eye", `${escapeHtml(actor.name)} has no Stain.`)
-    });
-    return;
-  }
-
   const roll = await new Roll(`${state.stain}d6`).evaluate({ async: true });
   const dice = getDiceResults(roll);
   const ones = dice.filter(d => d === 1).length;
@@ -233,8 +237,7 @@ function buildTracker(actor) {
       if (button.disabled) return;
       const value = clampNumber(button.dataset.mkemValue, 1, maxStain);
       const current = getState(actor).stain;
-      // Clicking the already-selected first mark clears the track without adding another visible control.
-      const next = current === value ? Math.max(0, value - 1) : value;
+      const next = current === value ? Math.max(MKEM.MIN_STAIN, value - 1) : value;
       await setStain(actor, next);
     });
   });

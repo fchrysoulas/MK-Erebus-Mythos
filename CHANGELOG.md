@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.4] - 2026-06-27
+
+### Fixed
+
+- Stain now clamps to a minimum of 1.
+- Devout class detection now supports broader class-name formats such as "The Devout" and class data stored in actor system fields.
+
 ## [0.1.3] - 2026-06-27
 
 ### Added

@@ -2,6 +2,13 @@
 
 Compact Foundry VTT module for Erebus Mythos Stain and Evil Eye tracking on Shadowdark actor sheets.
 
+## v0.1.4
+
+- Stain cannot go below **1**.
+- Improves Devout class detection for class names such as **The Devout**.
+- Devout characters have a maximum Stain of **4**.
+- Stain values **5** and **6** are disabled on Devout character trackers.
+
 ## v0.1.3
 
 - Devout characters have a maximum Stain of **4**.
